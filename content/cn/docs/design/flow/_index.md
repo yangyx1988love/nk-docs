@@ -2,7 +2,7 @@
 ---
 title: "数据处理平台"
 linkTitle: "数据处理平台"
-weight: 1000
+weight: 2000
 description: >
   数据处理平台负责大数据处理过程的调度和流程管理。
 ---
