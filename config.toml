@@ -1,5 +1,5 @@
 baseURL = "/"
-title = "XX 项目文档"
+title = "决策评估支持项目文档"
 
 enableRobotsTXT = true
 
@@ -66,8 +66,8 @@ anchor = "smart"
 # time_format_default = "02.01.2006"
 # time_format_blog = "02.01.2006"
 [languages.cn]
-title = "XX 项目文档"
-description = "XX 项目文档"
+title = "决策评估支持项目文档"
+description = "决策评估支持项目文档"
 languageName ="中文"
 contentDir = "content/cn"
 time_format_default = "2006-01-02"
@@ -79,7 +79,7 @@ weight = 1
 # Everything below this are Site Params
 
 [params]
-copyright = "何江 @ 南大通用"
+copyright = "何江 (hejiang@tju.edu.cn)"
 privacy_policy = "https://policies.google.com/privacy"
 
 # First one is picked as the Twitter card image if not set on page.
