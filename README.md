@@ -18,7 +18,7 @@ hugo server
 ```
 
 hugo 可以从这里下载
-https://github.com/gohugoio/hugo/releases/download/v0.59.1/hugo_0.59.1_Windows-64bit.zip
+https://github.com/gohugoio/hugo/releases/download/v0.59.1/hugo_extended_0.59.1_Windows-64bit.zip
 
 然后您就可以打开浏览器，输入网址 http://localhost:1313/ 查看文档了。
 
