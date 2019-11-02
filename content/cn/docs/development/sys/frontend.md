@@ -15,4 +15,4 @@ description: >
 
 从 https://vagrantup.com/ 下载并安装。
 
-
+参考配置 [Vagrantfile](../attachement/Vagrantfile)
