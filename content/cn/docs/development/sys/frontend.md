@@ -8,7 +8,11 @@ description: >
 
 前端界面源代码托管在 [https://gitee.com/henry-tech/nk-sys-frontend](https://gitee.com/henry-tech/nk-sys-frontend)。
 
-## 使用 vscode 编写代码
+## 搭建编译环境
 
-## 使用 vagrant 搭建调试环境
+前端界面需要在 Linux 上编译。
+我们采用 vagrant 来搭建编译环境。
+
+从 https://vagrantup.com/ 下载并安装。
+
 

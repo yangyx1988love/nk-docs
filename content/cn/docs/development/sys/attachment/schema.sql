@@ -1,10 +1,14 @@
 
--- database db_nankai
+-- database nk_emission
 use mysql;
 drop database if exists nk_emission;
 create database nk_emission;
 use nk_emission;
 
+-- create user and grant priviledges
+drop user if exists 'nk'@'localhost';
+create user 'nk'@'localhost' identified with 'mysql_native_password' by 'nk';
+grant all on nk_emission.* to 'nk'@'localhost';
 
 -- table t_road
 drop table if exists t_road;
@@ -57,7 +61,7 @@ create table t_fleet_closure(
     primary key(fleet_pid, fleet_id)
 );
 
-insert into t_fleet(fleet_id, name, description, avatar) values('ROOT', 'å…¨éƒ¨è½¦è¾†', 'å…¨éƒ¨è½¦è¾†', '/images/model/avatar.jpg');
+insert into t_fleet(fleet_id, name, description, avatar) values('ROOT', 'È«²¿³µÁ¾', 'È«²¿³µÁ¾', '/images/model/avatar.jpg');
 
 -- table t_model
 drop table if exists t_model;
@@ -77,7 +81,7 @@ create table t_model(
 );
 
 insert into t_model(model_id, name, description, avatar)
-values('emission-model-01', 'æ’æ”¾æµ‹ç®—æ¨¡å‹', 'ä¸ºç ”ç©¶åŸå¸‚æœºåŠ¨è½¦æ±¡æŸ“ç‰¹å¾ï¼Œå®ç°æ±¡æŸ“ç‰©æ’æ”¾çš„æœ€ä¼˜æ§åˆ¶ï¼Œæˆ‘ä»¬æå‡ºäº†ç ”ç©¶æ’æ”¾æ§åˆ¶ç›®æ ‡çš„æ•°å­¦ä¼˜åŒ–æ¨¡å‹ã€‚', '/images/model/emission.jpg');
+values('emission-model-01', 'ÅÅ·Å²âËãÄ£ĞÍ', 'ÎªÑĞ¾¿³ÇÊĞ»ú¶¯³µÎÛÈ¾ÌØÕ÷£¬ÊµÏÖÎÛÈ¾ÎïÅÅ·ÅµÄ×îÓÅ¿ØÖÆ£¬ÎÒÃÇÌá³öÁËÑĞ¾¿ÅÅ·Å¿ØÖÆÄ¿±êµÄÊıÑ§ÓÅ»¯Ä£ĞÍ¡£', '/images/model/emission.jpg');
 
 
 -- table t_param
@@ -151,6 +155,20 @@ create table t_road_now(
 );
 
 
+-- table t_road_history
+drop table if exists t_road_history;
+create table t_road_history(
+    road_id     varchar(20) not null,
+    
+    speed       double,
+    flow        double,
+    emission    double,
+    
+    created_at  datetime    not null    default now(),
+    created_by  varchar(20)
+);
+
+
 -- table t_road_emission
 drop table if exists t_road_emission;
 create table t_road_emission(
@@ -159,8 +177,6 @@ create table t_road_emission(
     fleet_id    varchar(20) not null,
     
     emission    double      not null,
-    
-    calc_at     datetime    not null,
     
     created_at  datetime    not null    default now(),
     created_by  varchar(20),
@@ -171,7 +187,7 @@ create table t_road_emission(
 
 show tables;
 
--- æ–°å»ºå­˜å‚¨è¿‡ç¨‹ç”¨äºæ„é€  t_fleet_closure å†…å®¹
+-- ĞÂ½¨´æ´¢¹ı³ÌÓÃÓÚ¹¹Ôì t_fleet_closure ÄÚÈİ
 drop procedure if exists populate_fleet_closure;
 DELIMITER //
 
@@ -200,14 +216,14 @@ END //
 
 DELIMITER ;
 
--- æ„é€  t_fleet_closure è¡¨å†…å®¹
+-- ¹¹Ôì t_fleet_closure ±íÄÚÈİ
 
 delete from t_fleet_closure;
 call populate_fleet_closure;
 select count(*) from t_fleet_closure;
 
 
--- æ–°å»ºå­˜å‚¨è¿‡ç¨‹ç”¨äºæŸ¥è¯¢ t_fleet_ratio
+-- ĞÂ½¨´æ´¢¹ı³ÌÓÃÓÚ²éÑ¯ t_fleet_ratio
 drop procedure if exists query_fleet_ratio;
 DELIMITER //
 
