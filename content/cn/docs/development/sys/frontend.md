@@ -16,3 +16,17 @@ description: >
 从 https://vagrantup.com/ 下载并安装。
 
 参考配置 [Vagrantfile](../attachement/Vagrantfile)
+
+    D:\home\nk-centos>vagrant up
+    D:\home\nk-centos>start vagrant rsync-auto
+    D:\home\nk-centos>vagrant ssh
+
+    [vagrant@localhost ~]$ sudo yum install wget -y
+    [vagrant@localhost ~]$ wget https://nodejs.org/dist/v12.13.0/node-v12.13.0-linux-x64.tar.xz
+    [vagrant@localhost ~]$ tar xvf node-v12.13.0-linux-x64.tar.xz
+
+    [vagrant@localhost ~]$ sudo ln -s ~/node-v12.13.0-linux-x64/bin/node /usr/local/bin/node
+    [vagrant@localhost ~]$ sudo ln -s ~/node-v12.13.0-linux-x64/bin/npm /usr/local/bin/npm
+
+    [vagrant@localhost ~]$ cd frontend/
+    [vagrant@localhost frontend]$ npm install
