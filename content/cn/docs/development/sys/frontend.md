@@ -17,9 +17,13 @@ description: >
 
 参考配置 [Vagrantfile](../attachement/Vagrantfile)
 
+### 进入系统
+
     D:\home\nk-centos>vagrant up
     D:\home\nk-centos>start vagrant rsync-auto
     D:\home\nk-centos>vagrant ssh
+
+### 安装工具
 
     [vagrant@localhost ~]$ sudo yum install wget -y
     [vagrant@localhost ~]$ wget https://nodejs.org/dist/v12.13.0/node-v12.13.0-linux-x64.tar.xz
@@ -30,3 +34,23 @@ description: >
 
     [vagrant@localhost ~]$ cd frontend/
     [vagrant@localhost frontend]$ npm install
+
+### 启动程序
+
+    [vagrant@localhost ~]$ cd frontend/
+    [vagrant@localhost frontend]$ npm start
+
+
+## 运行界面截图
+
+![](../attachment/fe-01.jpg)
+
+![](../attachment/fe-02.jpg)
+
+![](../attachment/fe-03.jpg)
+
+![](../attachment/fe-04.jpg)
+
+![](../attachment/fe-05.jpg)
+
+![](../attachment/fe-06.jpg)
