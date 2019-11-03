@@ -13,7 +13,7 @@ description: >
     git clone https://gitee.com/henry-tech/nk-sys-backend.git
     cd nk-sys-backend
     mvn package
-    java -jar target\RestDB-0.0.1.jar
+    mvn spring-boot:run
 
 ## 测试和验证
 
