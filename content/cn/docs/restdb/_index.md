@@ -3,10 +3,13 @@
 title: "RestDB 使用手册"
 weight: 1000
 description: >
-  RestDB 是只需要编写 SQL 语句即可提供 RESTful API 服务的应用程序。
+  RestDB 是仅需编写 SQL 语句即可提供 RESTful 后端服务的应用程序。
 ---
 
-## RestDB 基本原理
+前后端分离之后，很多简单应用软件的后端程序已经退化为支持 RESTful 的数据请求服务。
+使用 RestDB 可以完全替换后端程序，不再需要开发专门的后端服务程序，只需要配置 RestDB 即可，简化应用系统开发。
+
+## RestDB 实现原理
 
 RestDB 通过配置将 RESTful API 与 SQL(或其他 Action) 集合相关联。
 当客户端进行 RESTful 请求时，RestDB 执行相应的 SQL(或其他 Action) 集合，然后向客户端返回执行结果。
@@ -40,7 +43,7 @@ RestDB 通过配置将 RESTful API 与 SQL(或其他 Action) 集合相关联。
     restdb <- ds2:    返回执行结果
     deactivate ds2
     
-    client <- restdb: 返回执行结果 {"result":"hejiang"}
+    client <- restdb: 返回执行结果 {"result":"hello hejiang"}
     deactivate restdb
 @enduml
 </div>
@@ -77,7 +80,7 @@ RestDB 通过 swagger-ui 发布 RESTful API。
 
 ## RestDB 系统配置
 
-RestDB 使用 SpringBoot 开发，所以 RestDB 配置通过 SpringBoot 方式进行配置。
+RestDB 使用 [Spring Boot](https://spring.io/projects/spring-boot/) 框架，所以 RestDB 配置通过 Spring Boot 方式进行配置。
 
 RestDB 中生产阶段的配置文件为 `config/application-prod.properties`。
 
