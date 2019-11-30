@@ -3,10 +3,45 @@
 title: "RestDB 使用手册"
 weight: 1000
 description: >
-  RestDB 是一个只需要配置 SQL 语句就能提供 Restful 服务的应用程序。
+  RestDB 是只需要编写 SQL 语句即可提供 RESTful API 服务的应用程序。
 ---
 
-## 启动 RestDB
+## RestDB 基本原理
+
+RestDB 通过配置将 RESTful API 与 SQL(或其他 Action) 集合相关联。
+当客户端进行 RESTful 请求时，RestDB 执行相应的 SQL(或其他 Action) 集合，然后向客户端返回执行结果。
+
+<div class="plantuml">
+@startuml
+    participant "客户端" as client
+    participant "RestDB 服务" as restdb
+    participant "数据源 1" as ds1
+    participant "数据源 2" as ds2
+
+    client -> restdb: GET /api/test/hello/hejiang
+    activate restdb
+
+    restdb -> ds1:    执行第一个 SQL
+    activate ds1
+    restdb <- ds1:    返回执行结果
+    deactivate ds1
+    restdb -> ds2:    执行第二个 SQL
+    activate ds2
+    restdb <- ds2:    返回执行结果
+    deactivate ds2
+    restdb -> restdb: 执行自定义 Action
+    restdb -> ds2:    执行第三个 SQL
+    activate ds2
+    restdb <- ds2:    返回执行结果
+    deactivate ds2
+    
+    client <- restdb: 返回执行结果 {"result":"hejiang"}
+    deactivate restdb
+@enduml
+</div>
+
+
+## 启动 RestDB 服务
 
 RestDB 当前以源代码方式提供，您可以从 gitee.com 上下载代码并运行:
 
@@ -15,45 +50,87 @@ RestDB 当前以源代码方式提供，您可以从 gitee.com 上下载代码�
     mvn clean package spring-boot:run
 
 > **说明**  
-> 系统需要安装 maven 3 和 jdk-8。  
+> 系统需要安装 [maven 3](http://maven.apache.org/download.cgi) 和 [jdk-8](https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)。  
 
 ## 查看 RESTful API
 
-RestDB 将已定义的 API 通过 swagger-ui 发布。
+RestDB 通过 swagger-ui 发布 RESTful API。
 
-启动后，您可以在 http://localhost:8081/swagger-ui.html 查看当前已发布的 API。
+启动后，您可以在 http://localhost:8081/swagger-ui.html 查看当前已定义的 RESTful API 列表。
 
 
-## 配置数据源
+## RestDB 系统配置
 
 RestDB 使用 SpringBoot 开发，所以 RestDB 配置通过 SpringBoot 方式进行配置。
 
 RestDB 中生产阶段的配置文件为 `config/application-prod.properties`。
 
-配置文件中，我们对所要访问的数据源进行配置:
+RestDB 系统配置主要包括 `数据源` 和 `全局默认值`。
 
-    # 配置一个数据源(这里数据源的名称为 mysql)
-    # 可以配置多个数据源, 只需要使用不同的名称即可
+### 配置 RestDB 数据源
+
+在 RestDB 配置文件中，我们需要对 RESTful API 所要访问的数据源进行设置:
+
+    # file: config/application-prod.properties
+
     jersey.datasources.mysql.driverClassName=com.mysql.cj.jdbc.Driver
     jersey.datasources.mysql.url=jdbc:mysql://localhost/nk_emission
     jersey.datasources.mysql.username=root
     jersey.datasources.mysql.password=
     jersey.datasources.mysql.connectionProperties=userUnicode=true;characterEncoding=UTF-8;useFastDateParsing=false;serverTimezone=Asia/Shanghai
 
-    # 指定默认使用的数据源，必须与上面所配置的一个数据源名称相同
-    jersey.default.datasource=mysql
+每一个配置项的名称由三部分组成，每个部分之间用 `.` 隔开:
+
+* `jersey.datasources` 前缀是 RestDB 要求的;
+* 中间的 `mysql` 是一个数据源**标识符**，标识符是一个字符串, 可以由字母和数字组成。
+* 最后面是数据源配置属性。RestDB 使用 alibaba/druid 管理数据源, 
+  配置属性列表请参考 [DruidDataSource配置属性列表](https://github.com/alibaba/druid/wiki/DruidDataSource配置属性列表)。
+
+您也可以在 RestDB 中同时配置多个数据源，只需要使用不同的数据源标识符即可:
+
+    # file: config/application-prod.properties
+    
+    jersey.datasources.mysql.driverClassName=com.mysql.cj.jdbc.Driver
+    jersey.datasources.mysql.url=jdbc:mysql://localhost/nk_emission
+    jersey.datasources.mysql.username=root
+    jersey.datasources.mysql.password=
+    jersey.datasources.mysql.connectionProperties=userUnicode=true;characterEncoding=UTF-8;useFastDateParsing=false;serverTimezone=Asia/Shanghai
+
+    jersey.datasources.h2.driverClassName=org.h2.Driver
+    jersey.datasources.h2.url=jdbc:h2:mem:testdb;MODE=MYSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
+    jersey.datasources.h2.username=sa
+    jersey.datasources.h2.password=sa
+
+在上面的配置文件中，我们配置了两个数据源，分别使用 `mysql` 和 `h2` 标识符。
 
 
-## RestDB API 配置
+### 设置全局默认属性
 
-RestDB 中 API 在 `config/rest` 目录中配置。
-该目录中以 `.yaml` 结尾的文件都会被作为 API 配置文件。
+除了数据源以外，我们还可以在 RestDB 配置文件中设置 Restful API 全局默认属性:
 
-yaml 是一种用来表达数据序列化的格式，类似于 JSON，但比 JSON 更简洁。
+    # file: config/application-prod.properties
+    
+    jersey.default.datasource=h2
+    jersey.default.isolationLevel=SERIALIZABLE
 
-下面我们来看系统自带的 `test.yaml` API 配置文件:
+每一个配置项的名称由两部分组成：`jersey.default` 前缀，以及一个 RESTful API 配置项名称。  
 
-    ---
+这个例子中我们设置了两个全局默认属性:
+
+1. `datasource`: Restful API 请求所要访问的数据源。它必须是 RestDB 数据源中已经配置的数据源**标识符**；
+1. `isolationLevel`: Restful API 请求访问数据源时, SQL 执行隔离级别。详见 [Restful API 配置项](#restful-api-配置项)。
+
+
+## RESTful API 定义文件
+
+RESTful API 使用 `yaml` 文件进行定义。RESTful API 定义文件存放在 `config/rest` 目录中。
+`config/rest` 目录 (以及子目录) 中以 `.yaml` 结尾的文件都会被作为 RESTful API 定义文件。
+
+`yaml` 是一种用来表达数据序列化的格式，类似于 `JSON`，但比 `JSON` 更简洁。详见 [https://yaml.org/](https://yaml.org/)。
+
+下面是系统自带的 `test.yaml` API 定义文件:
+
+    # file: config/rest/test.yaml
 
     default:
       isolationLevel: REPEATABLE_READ
@@ -83,29 +160,29 @@ yaml 是一种用来表达数据序列化的格式，类似于 JSON，但比 JSO
         ret-type: scalar
 
 
-### 设置默认属性
+### RESTful API 默认属性
+
+除了全局默认属性外，我们还可以在 RESTful API 定义文件设置 RESTful API 默认属性。
 
 在 `.yaml` 文件中, 我们可以在 `default` 下进行默认属性设置:
 
+    # file: config/rest/test.yaml
+
     default:
-      datasource: mysql
       isolationLevel: REPEATABLE_READ
 
-这里的配置会覆盖 `application-prod.properties` 中 `jersey.default.*` 下的配置。
+这里的配置会覆盖我们在 `application-prod.properties` 中 `jersey.default.*` 下设置的全局默认属性。
 
-这非常有用，因为 `jersey.default.*` 中对所有 `.yaml` 文件起作用，而一个 `.yaml` 文件中 `default` 下的配置只对该文件中的资源配置起作用。
-
-默认属性可配置项说明:
-
-1. `datasource`: 指定默认数据源名称，数据源名称必须来自 `application-prod.properties` 文件中 `jersey.datasources.*` 下定义的名称；
-
-1. `isolationLevel`: 指定默认事务隔离级别，可配置为 `NONE`, `READ_UNCOMMITTED`, `READ_COMMITTED`, `REPEATABLE_READ`, `SERIALIZABLE` 五个级别中的一个。
+这非常有用，因为在 `jersey.default.*` 设置的全局默认属性对所有RESTful API 定义文件起作用，
+而在 RESTful API 定义文件中 `default` 下设置的默认属性只对该文件中的 RESTful API 定义生效。
 
 
-### 定义 Restful 资源
+### RESTful API 定义
 
-RestDB 在 `resources` 下对 Restful 资源进行定义。  
-`resources` 是一个列表，每一个 Restful 资源是 `resources` 的一项。  
+RESTful API 在 `resources` 下进行配置。  
+`resources` 是一个列表，每一个 RESTful API 定义是 `resources` 的一项。  
+
+    # file: config/rest/test.yaml
 
     resources:
     - path: hello/{name}
@@ -131,36 +208,91 @@ RestDB 在 `resources` 下对 Restful 资源进行定义。
         ret-name: place
         ret-type: scalar
 
-资源定义配置项说明:
-
-1. `path`: 指定资源路径。资源路径可以是相对路径，也可以是绝对路径。
-
-1. `method`:
-
-1. `summary`:
-
-1. `notes`:
-
-1. `params`:
-
-1. `actions`:
+RESTful API 定义由一组配置项组成。如果某个配置项没有被指定，
+系统首先会在 RESTful API 定义所在文件的 `default` 下的默认属性中查找；
+如果没有找到，系统才会使用全局默认属性。
 
 
-#### 参数说明
+### RESTful API 配置项
 
-Restful 请求参数在 `params` 下进行说明。
+RESTful API 配置项比较多，现将各配置项说明如下：
 
-#### 行为定义
+1. `path`: RESTful API 路径。
+    RESTful API 路径可以是相对路径，也可以是绝对路径(以 `/` 开始的路径)。  
+    对于路径参数，因为与路径中的出现位置相关，所以要在路径中使用`{参数名称}`表示出来。
+    例如 `hello/{name}` 这个相对路径中, `name` 就是一个路径参数。   
 
-Restful 行为在 `actions` 下进行定义。
+    使用相对路径设置的 RESTful API 路径按以下方式构成:  
+    **`/api` + `/` + 子目录名称(如果有) + `/` + RESTful API 定义文件名(不包含.yaml) + `/` + 相对路径**  
+
+    使用绝对路径设置的 RESTful API 路径按以下方式构成:  
+    **`/api` + 绝对路径**  
+    
+1. `method`: RESTful API 请求方法。  
+   根据 HTTP 协议，常用的请求方法包括 `GET`, `POST`, `PUT`, `DELETE`。
+
+1. `summary`: RESTful API 简要说明。  
+   RESTful API 简要说明会显示在 swagger-ui 中。清晰的说明对 API 使用者非常重要。
+
+1. `notes`: RESTful API 详细说明。  
+   RESTful API 详细说明会显示在 swagger-ui 中。清晰的说明对 API 使用者非常重要。
+
+1. `params`: RESTful API 参数列表。详见 [RESTful API 请求参数](#restful-api-请求参数)。
+
+1. `actions`: RESTful API 行为列表。详见 [RESTful API 行为](#restful-api-行为定义)。
+
+
+#### RESTful API 请求参数
+
+RESTful API 请求参数在 `params` 下定义。每个参数的配置项如下:
+
+1. name
+
+1. value
+
+1. required
+
+1. dataType
+
+1. paramType
+
+1. example
+
+
+#### RESTful API 行为定义
+
+RESTful API 行为在 `actions` 下定义。  
+行为的配置项与行为的类型相关。RESTful API SQL 行为配置项如下:
+
+1. `type`: 不设置 (默认为 `sql`)，或设置为 `sql`
+
+1. `datasource`: 设置执行 SQL 的数据源。不设置 (从默认属性中读取), 或设置为一个数据源**标识符**。
+
+1. `text`: 要执行的 SQL 语句, 可以使用数据源标识符代替 `text`, 在不同数据源下执行不同的 SQL 语句。  
+   对于 SQL 语句中参数的书写方式，请参见 [书写 SQL 语句](#书写-sql-语句)。
+
+1. `sql-type`: 可以设置为 `select`, `update`, `delete`, `insert`, `call` (调用存储过程)
+
+1. `ret-name`:
+
+1. `ret-type`:
+
+
+#### 书写 SQL 语句
 
 
 ## 与前端界面集成
 
-你也可以直接使用 RestDB 的 WEB 容器来发布前端界面静态资源。
-只需要将编译好的前端界面文件复制到 RestDB 的 `static` 目录下，
+你可以直接使用 RestDB 应用的 WEB 容器来发布前端界面静态资源。
+只需要将编译好的前端界面文件复制到 RestDB 的 `static/` 目录下，
 用户就可以通过同样的地址访问前端页面。
 
 RestDB 是 SPA 应用友好的。
-任何无后缀请求，都会被重定向到 index.html 中。
-所以前端应用中可以随意使用 hash 或 history 路由，而不用担心发布后页面刷新和跳转问题。
+任何无后缀请求，都会被重定向到 `static/index.html` 中。
+所以前端应用可以使用 hash 或 history 路由，
+都不用担心在 RestDB 应用的 WEB 容器中运行时页面刷新和跳转问题。
+
+
+## 扩展 RestDB
+
+RestDB 通过
