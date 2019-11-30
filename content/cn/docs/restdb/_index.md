@@ -21,16 +21,21 @@ RestDB 通过配置将 RESTful API 与 SQL(或其他 Action) 集合相关联。
     client -> restdb: GET /api/test/hello/hejiang
     activate restdb
 
-    restdb -> ds1:    执行第一个 SQL
+    restdb -> ds1:    执行第一个 Action
     activate ds1
     restdb <- ds1:    返回执行结果
     deactivate ds1
-    restdb -> ds2:    执行第二个 SQL
+    
+    restdb -> ds2:    执行第二个 Action
     activate ds2
     restdb <- ds2:    返回执行结果
     deactivate ds2
-    restdb -> restdb: 执行自定义 Action
-    restdb -> ds2:    执行第三个 SQL
+
+    note over restdb, ds2 
+      顺序执行其他 Action
+    end note
+
+    restdb -> ds2:    执行最后一个 Action
     activate ds2
     restdb <- ds2:    返回执行结果
     deactivate ds2
@@ -45,12 +50,23 @@ RestDB 通过配置将 RESTful API 与 SQL(或其他 Action) 集合相关联。
 
 RestDB 当前以源代码方式提供，您可以从 gitee.com 上下载代码并运行:
 
-    git clone https://gitee.com/henry-tech/nk-sys-backend.git
-    cd nk-sys-backend
+    git clone https://gitee.com/henry-tech/restdb.git
+    cd restdb
     mvn clean package spring-boot:run
 
 > **说明**  
 > 系统需要安装 [maven 3](http://maven.apache.org/download.cgi) 和 [jdk-8](https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)。  
+
+
+## 构建 docker 镜像
+
+RestDB 支持构建 docker 镜像。想要构建 docker 镜像, 请在 restdb 目录下执行以下命令:
+
+    mvn clean package docker:build
+
+> **说明**  
+> 系统需要安装 [docker](https://www.docker.com/)。
+
 
 ## 查看 RESTful API
 
@@ -145,7 +161,7 @@ RESTful API 使用 `yaml` 文件进行定义。RESTful API 定义文件存放在
         value: 姓名
         required: true
         dataType: string
-        paramType: path   # paraType: path, query, body, header or form
+        paramType: path   # paramType: path, query, body, header or form
         example: 何江
       actions:
       - # 使用 prepare statement 参数
@@ -194,7 +210,7 @@ RESTful API 在 `resources` 下进行配置。
         value: 姓名
         required: true
         dataType: string
-        paramType: path   # paraType: path, query, body, header or form
+        paramType: path   # paramType: path, query, body, header or form
         example: 何江
       actions:
       - # 使用 prepare statement 参数
@@ -237,62 +253,113 @@ RESTful API 配置项比较多，现将各配置项说明如下：
 1. `notes`: RESTful API 详细说明。  
    RESTful API 详细说明会显示在 swagger-ui 中。清晰的说明对 API 使用者非常重要。
 
-1. `params`: RESTful API 参数列表。详见 [RESTful API 请求参数](#restful-api-请求参数)。
+1. `params`: RESTful API 请求参数列表。详见 [RESTful API 请求参数](#restful-api-请求参数)。
 
-1. `actions`: RESTful API 行为列表。详见 [RESTful API 行为](#restful-api-行为定义)。
+1. `actions`: RESTful API 行为列表。详见 [RESTful API 行为定义](#restful-api-行为定义)。
 
 
 #### RESTful API 请求参数
 
 RESTful API 请求参数在 `params` 下定义。每个参数的配置项如下:
 
-1. name
+1. `name`: 参数名称。字符串值。
 
-1. value
+1. `value`: 参数说明。字符串值。
 
-1. required
+1. `required`: 是否必须参数。可以是 `true` 或 `false`
 
-1. dataType
+1. `dataType`: 数据类型。可以是 `string`, `int`, `long`, `double` 等
 
-1. paramType
+1. `paramType`: 参数类型。可以是 `path`, `query`, `body`, `header` 或 `form`
 
-1. example
+1. `example`: 参数值样例。作为 swagger-ui 执行请求时的默认值。
 
 
 #### RESTful API 行为定义
 
-RESTful API 行为在 `actions` 下定义。  
-行为的配置项与行为的类型相关。RESTful API SQL 行为配置项如下:
+RESTful API 行为在 `actions` 下定义。行为的配置项与行为的类型 (`type` 参数, 默认为 sql) 相关。
 
-1. `type`: 不设置 (默认为 `sql`)，或设置为 `sql`
+
+#### SQL 行为配置
+
+SQL 行为配置项如下:
+
+1. `type`: 不设置 (默认为 `sql`)，或设置为 `sql`。
 
 1. `datasource`: 设置执行 SQL 的数据源。不设置 (从默认属性中读取), 或设置为一个数据源**标识符**。
 
 1. `text`: 要执行的 SQL 语句, 可以使用数据源标识符代替 `text`, 在不同数据源下执行不同的 SQL 语句。  
    对于 SQL 语句中参数的书写方式，请参见 [书写 SQL 语句](#书写-sql-语句)。
 
-1. `sql-type`: 可以设置为 `select`, `update`, `delete`, `insert`, `call` (调用存储过程)
+1. `sql-type`: SQL 语句类型。可以设置为 SELECT, DELETE, TRUNCATE, UPDATE, INSERT, CREATE, DROP, RUN, ALTER, EXEC, CALL (调用存储过程), OTHER
 
-1. `ret-name`:
+1. `ret-name`: 将 SQL 执行返回的二维表存储到 RESTful 请求返回对象中的属性名称。
 
-1. `ret-type`:
+1. `ret-type`: 可以设置为 scalar, object, array, array-array。
+   我们知道，执行 SQL 语句返回的结果集是一个二维表。所以  
+   * `scalar`: 表示返回二维表中的第一行，第一列的值; 对于返回非结果集的 SQL 语句，必须设置为 `scalar`，比如 DELETE 返回影响行数数值;
+   * `object`: 表示返回二维表中的第一行，组成一个以字段名称为属性名的对象;
+   * `array` : 表示返回对象数组，二维表的每一行是数组的一个对象;
+   * `array-array`: 表示返回值数组, 二维表的每一行数组内的一项，也是一个数组。
 
 
 #### 书写 SQL 语句
 
+SQL 语句中可以使用 RESTful 请求参数。使用请求参数有两种形式:
 
-## 与前端界面集成
+1. `@参数名`: 例如 `SELECT * FROM table1 WHERE name = @name`。该语句执行时会将请求参数中的 name 参数传给数据库执行；
 
-你可以直接使用 RestDB 应用的 WEB 容器来发布前端界面静态资源。
+1. `$参数名`: 例如 `SELECT * FROM table1 WHERE name = '$name'`。  
+   该语句执行时会用请求参数中的 name 参数替换 SQL 语句中的 $name。  
+   例如传入 name 参数的值是 hejiang, 那么实际执行的 SQL 语句是 `SELECT * FROM table1 WHERE name = 'hejiang'`。  
+   这也是为什么 '$name' 两边需要有单引号 (在 SQL 语句中表示字符串常量) 的原因。
+
+RestDB 使用 nutz 执行 SQL 语句。
+关于 SQL 语句中参数使用可以参考 http://www.nutzam.com/core/dao/customized_sql.html 。
+
+
+#### JAVA 行为配置
+
+JAVA 行为配置项如下:
+
+1. `type`: 必须设置为 `java`;
+
+1. `class`: 实现了 `JerseyResourceAction` 接口的类;
+
+1. `其他参数`: 行为配置项由 `class` 使用，其他参数请根据 `class` 需要进行配置。
+
+
+#### PYTHON 行为配置
+
+PYTHON 行为配置项如下:
+
+1. `type`: 必须设置为 `python`;
+
+1. `其他参数`: 待补充。
+
+
+## 发布静态 HTML 文件
+
+可以直接使用 RestDB 应用的 WEB 容器来发布前端界面静态资源文件。
 只需要将编译好的前端界面文件复制到 RestDB 的 `static/` 目录下，
 用户就可以通过同样的地址访问前端页面。
 
 RestDB 是 SPA 应用友好的。
 任何无后缀请求，都会被重定向到 `static/index.html` 中。
 所以前端应用可以使用 hash 或 history 路由，
-都不用担心在 RestDB 应用的 WEB 容器中运行时页面刷新和跳转问题。
+不用担心在 RestDB 应用的 WEB 容器中运行时页面刷新和跳转问题。
 
 
-## 扩展 RestDB
+## RestDB 扩展接口
 
-RestDB 通过
+RestDB Action 通过 JerseyResourceActionProvider 创建。
+JerseyResourceActionProvider 通过 Java 的 ServiceLoader 机制加载。
+
+您可以实现自己的 JerseyResourceActionProvider, 并将 jar 包放在 classpath 上即可。
+
+请参考 RestDB 中 JerseyResourceSqlActionProvider,
+JerseyResourceJavaActionProvider 或 JerseyResourcePythonActionProvider 类的实现代码。
+
+## RestDB 使用授权
+
+RestDB 采用 Apache License Version 2.0 授权。详见 http://www.apache.org/licenses/LICENSE-2.0 。
