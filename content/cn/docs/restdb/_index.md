@@ -1,6 +1,6 @@
 
 ---
-title: "使用 RestDB 开发"
+title: "RestDB 使用手册"
 weight: 1000
 description: >
   RestDB 是一个只需要配置 SQL 语句就能提供 Restful 服务的应用程序。
@@ -17,9 +17,9 @@ RestDB 当前以源代码方式提供，您可以从 gitee.com 上下载代码�
 > **说明**  
 > 系统需要安装 maven 3 和 jdk-8。  
 
-## 查看 RestDB API
+## 查看 RESTful API
 
-RestDB 将当前 API 通过 swagger-ui 发布。
+RestDB 将已定义的 API 通过 swagger-ui 发布。
 
 启动后，您可以在 http://localhost:8081/swagger-ui.html 查看当前已发布的 API。
 
@@ -153,3 +153,14 @@ Restful 请求参数在 `params` 下进行说明。
 #### 行为定义
 
 Restful 行为在 `actions` 下进行定义。
+
+
+## 与前端界面集成
+
+你也可以直接使用 RestDB 的 WEB 容器来发布前端界面静态资源。
+只需要将编译好的前端界面文件复制到 RestDB 的 `static` 目录下，
+用户就可以通过同样的地址访问前端页面。
+
+RestDB 是 SPA 应用友好的。
+任何无后缀请求，都会被重定向到 index.html 中。
+所以前端应用中可以随意使用 hash 或 history 路由，而不用担心发布后页面刷新和跳转问题。
