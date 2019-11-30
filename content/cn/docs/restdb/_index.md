@@ -240,6 +240,7 @@ RESTful API 配置项比较多，现将各配置项说明如下：
     RESTful API 路径可以是相对路径，也可以是绝对路径(以 `/` 开始的路径)。  
     对于路径参数，因为与路径中的出现位置相关，所以要在路径中使用`{参数名称}`表示出来。
     例如 `hello/{name}` 这个相对路径中, `name` 就是一个路径参数。   
+    RestDB 使用 [jersey](https://projects.eclipse.org/projects/ee4j.jersey) 提供 RESTful 服务, 路径参数写法可参考 jersey 文档。
 
     使用相对路径设置的 RESTful API 路径按以下方式构成:  
     **`/api` + `/` + 子目录名称(如果有) + `/` + RESTful API 定义文件名(不包含.yaml) + `/` + 相对路径**  
@@ -362,6 +363,46 @@ JerseyResourceActionProvider 通过 Java 的 ServiceLoader 机制加载。
 
 请参考 RestDB 中 JerseyResourceSqlActionProvider,
 JerseyResourceJavaActionProvider 或 JerseyResourcePythonActionProvider 类的实现代码。
+
+JerseyResourceActionProvider 和 JerseyResourceAction 接口定义如下:
+
+```java
+package com.henrytech.jersey;
+
+public interface JerseyResourceActionProvider {
+  JerseyResourceAction createAction(String type);
+}
+
+public interface JerseyResourceAction {
+  void init(Map<String, Object> description, Map<String, Object> context,
+      Map<String, NutDao> datasources) throws Exception;
+
+  void beginTransaction(int level) throws Exception;
+
+  void execute(ContainerRequestContext context, Map<String, Object> result)
+      throws Exception;
+
+  void commit() throws Exception;
+
+  void rollback() throws Exception;
+}
+```
+
+
+## RestDB 依赖组件
+
+1. Spring Boot: https://spring.io/projects/spring-boot/
+1. jersey: https://projects.eclipse.org/projects/ee4j.jersey
+1. druid: https://github.com/alibaba/druid/wiki
+1. nutz: http://www.nutzam.com/
+1. snakeyaml: https://bitbucket.org/asomov/snakeyaml-engine
+1. keycloak: https://www.keycloak.org/
+1. springfox: https://springfox.github.io/springfox/
+1. javaassist: http://www.javassist.org/
+1. H2: http://h2database.com/html/main.html
+1. commons-io: http://commons.apache.org/proper/commons-io/
+1. commons-beanutils: http://commons.apache.org/proper/commons-beanutils/index.html
+
 
 ## RestDB 使用授权
 
